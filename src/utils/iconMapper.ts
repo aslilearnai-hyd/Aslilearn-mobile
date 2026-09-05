@@ -1,0 +1,53 @@
+// Icon mapping from lucide-react-native to @expo/vector-icons (Ionicons)
+export const iconMap: Record<string, string> = {
+  'ArrowLeft': 'arrow-back',
+  'ArrowRight': 'arrow-forward',
+  'Eye': 'eye',
+  'EyeOff': 'eye-off',
+  'Mail': 'mail',
+  'Lock': 'lock-closed',
+  'User': 'person',
+  'Users': 'people',
+  'Zap': 'flash',
+  'Sparkles': 'sparkles',
+  'Trophy': 'trophy',
+  'Brain': 'bulb',
+  'Video': 'videocam',
+  'FileText': 'document-text',
+  'Target': 'locate-outline',
+  'BookOpen': 'book',
+  'Play': 'play',
+  'TrendingUp': 'trending-up',
+  'Star': 'star',
+  'ChevronRight': 'chevron-forward',
+  'ChevronDown': 'chevron-down',
+  'ChevronUp': 'chevron-up',
+  'CheckCircle': 'checkmark-circle',
+  'XCircle': 'close-circle',
+  'Clock': 'time',
+  'Send': 'send',
+  'Bot': 'chatbubbles',
+  'Settings': 'settings',
+  'LogOut': 'log-out',
+  'Award': 'trophy',
+  'Calendar': 'calendar',
+  'Download': 'download',
+  'MessageSquare': 'chatbubble',
+  'Gamepad2': 'game-controller',
+  'Calculator': 'calculator',
+  'Atom': 'nuclear',
+  'FlaskConical': 'flask',
+  'Microscope': 'search',
+  'Image': 'image',
+  'File': 'document',
+  'ExternalLink': 'open-outline',
+  'ClipboardList': 'clipboard',
+  'GraduationCap': 'school',
+  'UserPlus': 'person-add',
+};
+
+
+
+
+
+

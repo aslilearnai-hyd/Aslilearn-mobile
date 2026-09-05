@@ -1,0 +1,224 @@
+/** Mobile port of web render-teacher-markdown (no KaTeX — math shown as plain Unicode). */
+import { stripMarkdownSyntax } from './strip-markdown-syntax';
+import { formatClassroomScienceText } from './exam-text-normalize';
+
+export function formatInlineMarkdown(t: string): string {
+  if (t.includes('__MATH_BLOCK__') || t.includes('__MATH_ERROR__') || t.includes('__NOTE_CARD')) {
+    return t;
+  }
+
+  let formatted = stripMarkdownSyntax(formatClassroomScienceText(t))
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+
+  formatted = formatted.replace(
+    /(?<!\$)\$(?!\$)([^$\n]+?)(?<!\$)\$(?!\$)/g,
+    (_match, mathContent: string) =>
+      `<code class="bg-gray-100 px-1.5 py-0.5 rounded text-sm font-mono text-gray-800">${mathContent.trim()}</code>`
+  );
+
+  formatted = formatted.replace(
+    /```([\s\S]*?)```/g,
+    '<pre class="bg-gray-100 p-4 rounded-lg overflow-x-auto mb-2 text-sm font-mono"><code>$1</code></pre>'
+  );
+
+  formatted = formatted.replace(/`([^`]+)`/g, (match, codeContent: string) => {
+    if (match.includes('$')) return match;
+    return `<code class="bg-gray-100 px-2 py-1 rounded text-sm font-mono text-gray-800">${codeContent}</code>`;
+  });
+
+  return formatted;
+}
+
+function splitPipeCells(row: string): string[] {
+  const parts = row.trim().split('|');
+  return parts
+    .map((p) => p.trim())
+    .filter((p, i) => !(p === '' && (i === 0 || i === parts.length - 1)));
+}
+
+function isSeparatorRow(row: string): boolean {
+  const cells = splitPipeCells(row);
+  if (cells.length === 0) return false;
+  return cells.every((c) => /^:?-{3,}:?$/.test(c.replace(/\s/g, '')));
+}
+
+function gfmPipeTableToHtml(rows: string[]): string {
+  if (rows.length < 2 || !isSeparatorRow(rows[1])) return rows.join('\n');
+
+  const headers = splitPipeCells(rows[0]);
+  const bodyRows = rows.slice(2).map((r) => splitPipeCells(r));
+
+  let html =
+    '<div class="my-4 overflow-x-auto"><table class="min-w-full border-collapse border border-gray-300 text-sm">';
+  html += '<thead><tr>';
+  for (const h of headers) {
+    html += `<th class="border border-gray-300 bg-gray-50 px-3 py-2 text-left font-semibold text-gray-900">${formatInlineMarkdown(h)}</th>`;
+  }
+  html += '</tr></thead><tbody>';
+  for (const row of bodyRows) {
+    html += '<tr>';
+    for (let k = 0; k < headers.length; k++) {
+      const cell = row[k] ?? '';
+      html += `<td class="border border-gray-300 px-3 py-2 align-top text-gray-700">${formatInlineMarkdown(cell)}</td>`;
+    }
+    html += '</tr>';
+  }
+  html += '</tbody></table></div>';
+  return html;
+}
+
+function expandGfmTablesBeforeSplit(text: string): string {
+  const lines = text.split('\n');
+  const result: string[] = [];
+  let i = 0;
+  while (i < lines.length) {
+    const trimmed = lines[i].trim();
+    if (trimmed.startsWith('|')) {
+      const block: string[] = [];
+      let j = i;
+      while (j < lines.length && lines[j].trim().startsWith('|')) {
+        block.push(lines[j]);
+        j++;
+      }
+      if (block.length >= 2) {
+        const html = gfmPipeTableToHtml(block);
+        if (html.startsWith('<div')) {
+          result.push(html);
+          i = j;
+          continue;
+        }
+      }
+    }
+    result.push(lines[i]);
+    i++;
+  }
+  return result.join('\n');
+}
+
+export function renderMarkdown(text: string): string {
+  if (!text) return '';
+
+  let processedText = text;
+  try {
+    if (text.trim().startsWith('{') && text.includes('"formatted"')) {
+      const parsed = JSON.parse(text) as { formatted?: string };
+      if (parsed.formatted) {
+        processedText = parsed.formatted;
+      }
+    }
+  } catch {
+    processedText = text;
+  }
+
+  processedText = stripMarkdownSyntax(processedText);
+
+  processedText = processedText.replace(/\$\$([\s\S]*?)\$\$/g, (_match, mathContent: string) => {
+    const cleaned = mathContent.trim();
+    return `<div class="my-4 overflow-x-auto rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm font-mono text-gray-800">${cleaned}</div>`;
+  });
+
+  processedText = processedText.replace(
+    /__NOTE_CARD_START__\n([\s\S]*?)\n__NOTE_CARD_END__/g,
+    (_match, cardContent: string) => `__HTML_CARD__${cardContent.trim()}__HTML_CARD__`
+  );
+
+  processedText = expandGfmTablesBeforeSplit(processedText);
+
+  const lines = processedText.split('\n');
+  let html = '';
+  let inList = false;
+  let listType: 'ul' | 'ol' | null = null;
+
+  const closeList = () => {
+    if (inList) {
+      html += listType === 'ul' ? '</ul>' : '</ol>';
+      inList = false;
+      listType = null;
+    }
+  };
+
+  for (let i = 0; i < lines.length; i++) {
+    let line = lines[i];
+    const trimmed = line.trim();
+
+    if (line.includes('__HTML_CARD__')) {
+      closeList();
+      line = line.replace(/__HTML_CARD__(.*?)__HTML_CARD__/g, '$1');
+      html += line + '\n';
+      continue;
+    }
+
+    const hasHTML =
+      line.includes('<div') ||
+      line.includes('</div>') ||
+      line.includes('<table') ||
+      line.includes('<h2') ||
+      line.includes('<h3') ||
+      line.includes('<ul') ||
+      line.includes('<li') ||
+      line.includes('<p') ||
+      line.includes('<span');
+
+    if (hasHTML) {
+      closeList();
+      html += line + '\n';
+      continue;
+    }
+
+    if (trimmed.startsWith('#### ')) {
+      closeList();
+      html += `<h4 class="text-base font-bold text-gray-900 mt-4 mb-2">${formatInlineMarkdown(trimmed.substring(5))}</h4>`;
+    } else if (trimmed.startsWith('### ')) {
+      closeList();
+      html += `<h3 class="text-lg font-bold text-gray-900 mt-6 mb-3">${formatInlineMarkdown(trimmed.substring(4))}</h3>`;
+    } else if (trimmed.startsWith('## ')) {
+      closeList();
+      html += `<h2 class="text-xl font-bold text-gray-900 mt-8 mb-4 border-b border-gray-200 pb-2">${formatInlineMarkdown(trimmed.substring(3))}</h2>`;
+    } else if (trimmed.startsWith('# ')) {
+      closeList();
+      html += `<h1 class="text-2xl font-bold text-gray-900 mt-8 mb-4">${formatInlineMarkdown(trimmed.substring(2))}</h1>`;
+    } else if (/^\d+\.\s+/.test(trimmed)) {
+      if (!inList || listType !== 'ol') {
+        closeList();
+        html += '<ol class="list-decimal ml-6 mb-4 space-y-1">';
+        inList = true;
+        listType = 'ol';
+      }
+      const content = trimmed.replace(/^\d+\.\s+/, '');
+      html += `<li class="mb-1">${formatInlineMarkdown(content)}</li>`;
+    } else if (/^[-*]\s+/.test(trimmed)) {
+      if (!inList || listType !== 'ul') {
+        closeList();
+        html += '<ul class="list-disc ml-6 mb-4 space-y-1">';
+        inList = true;
+        listType = 'ul';
+      }
+      const content = trimmed.replace(/^[-*]\s+/, '');
+      html += `<li class="mb-1">${formatInlineMarkdown(content)}</li>`;
+    } else if (/^-{3,}$/.test(trimmed)) {
+      closeList();
+      html += '<hr class="my-6 border-gray-200" />';
+    } else if (!trimmed) {
+      closeList();
+      if (
+        html &&
+        !html.endsWith('</p>') &&
+        !html.endsWith('</h1>') &&
+        !html.endsWith('</h2>') &&
+        !html.endsWith('</h3>') &&
+        !html.endsWith('</h4>') &&
+        !html.endsWith('</div>')
+      ) {
+        html += '<br>';
+      }
+    } else {
+      closeList();
+      html += `<p class="mb-4 text-gray-700 leading-relaxed">${formatInlineMarkdown(line)}</p>`;
+    }
+  }
+
+  closeList();
+  return html;
+}

@@ -1,0 +1,65 @@
+{
+  "expo": {
+    "name": "AsliLearn AI",
+    "slug": "aslilearn-mobile",
+    "version": "1.0.60",
+    "orientation": "default",
+    "icon": "./assets/app-icon.png",
+    "userInterfaceStyle": "light",
+    "jsEngine": "hermes",
+    "splash": {
+      "image": "./assets/logo-transparent.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#e6f7fe"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.tech.aslilearnai",
+      "buildNumber": "60"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/app-icon-foreground.png",
+        "backgroundColor": "#041F46"
+      },
+      "package": "com.tech.aslilearnai",
+      "versionCode": 60,
+      "edgeToEdgeEnabled": false,
+      "softwareKeyboardLayoutMode": "resize",
+      "navigationBar": {
+        "backgroundColor": "#f0fdf4"
+      },
+      "permissions": [
+        "INTERNET",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE"
+      ]
+    },
+    "plugins": [
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/logo-transparent.png",
+          "resizeMode": "contain",
+          "backgroundColor": "#e6f7fe"
+        }
+      ],
+      "expo-router",
+      "expo-secure-store",
+      "expo-web-browser",
+      "@react-native-community/datetimepicker",
+      "expo-font"
+    ],
+    "scheme": "aslilearn",
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "f65847b9-62a4-4f35-ae9d-d7adaeac2c6a"
+      }
+    },
+    "owner": "amenityforge"
+  }
+}
