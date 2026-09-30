@@ -214,7 +214,7 @@ function learningPathContentFingerprint(contents: any[]): string {
   return (contents || [])
     .map((item) => String(item?._id || ''))
     .filter(Boolean)
-    .sort()
+    .sort((a, b) => a.localeCompare(b))
     .join('|');
 }
 

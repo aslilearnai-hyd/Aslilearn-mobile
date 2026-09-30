@@ -130,8 +130,6 @@ export const AI_PDF_TOOL_OPTIONS = [
   { value: 'quick-assignment-builder', label: 'Quick Assignment Builder' },
 ].sort((a, b) => a.label.localeCompare(b.label, 'en', { sensitivity: 'base' }));
 
-const DEPRECATED_TOOLS = new Set<string>();
-
 export function formatTokenCount(value: number) {
   const n = Number(value || 0);
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(2)}M`;
@@ -241,9 +239,7 @@ function compareChapterWiseLabels(a: string, b: string) {
 }
 
 export function buildGroupedHierarchy(items: PdfItem[]): GroupedTool[] {
-  const visible = items.filter(
-    (item) => !DEPRECATED_TOOLS.has(String(item.toolType || '')) && !DEPRECATED_TOOLS.has(String(item.contentType || '')),
-  );
+  const visible = items;
   const byTool = new Map<string, Map<string, { classLabel: string; board: string; subjects: Map<string, Map<string, Map<string, PdfItem[]>>> }>>();
 
   for (const item of visible) {

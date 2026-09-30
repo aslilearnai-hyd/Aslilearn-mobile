@@ -84,7 +84,7 @@ export default function HomeworkSubmissionsView() {
     classes.forEach((c) => {
       if (c.classNumber) set.add(String(c.classNumber));
     });
-    return Array.from(set).sort();
+    return Array.from(set).sort((a, b) => String(a).localeCompare(String(b), undefined, { numeric: true }));
   }, [studentRows, classes]);
 
   const toggleHw = (id: string) => {

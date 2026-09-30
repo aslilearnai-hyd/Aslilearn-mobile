@@ -64,7 +64,7 @@ export default function SubjectManagementView() {
   };
 
   const getUniqueClassNumbers = () => {
-    return Array.from(new Set(subjects.map(s => s.classNumber).filter(Boolean))).sort();
+    return Array.from(new Set(subjects.map(s => s.classNumber).filter(Boolean))).sort((a, b) => String(a).localeCompare(String(b), undefined, { numeric: true }));
   };
 
   const filteredSubjects = useMemo(() => {

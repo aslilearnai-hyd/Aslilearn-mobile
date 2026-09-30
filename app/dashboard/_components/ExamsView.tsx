@@ -409,7 +409,7 @@ export default function ExamsView({
     classFilteredExams.forEach((exam) => {
       getExamSubjects(exam).forEach((s) => set.add(s));
     });
-    return Array.from(set.values()).sort();
+    return Array.from(set.values()).sort((a, b) => String(a).localeCompare(String(b), undefined, { numeric: true }));
   }, [classFilteredExams]);
 
   const subjectFilteredExams = useMemo(

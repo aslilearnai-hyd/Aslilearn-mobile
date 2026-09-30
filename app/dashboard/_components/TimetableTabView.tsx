@@ -12,15 +12,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { API_BASE_URL } from '../../../src/lib/api-config';
-
-function timetableImageSrc(imageUrl?: string | null): string {
-  const raw = String(imageUrl || '').trim();
-  if (!raw) return '';
-  if (raw.startsWith('http://') || raw.startsWith('https://')) return raw;
-  if (raw.startsWith('/')) return `${API_BASE_URL}${raw}`;
-  return `${API_BASE_URL}/${raw}`;
-}
+import { timetableImageSrc } from '../../../src/lib/timetable-image-src';
 import { getSchoolBranding } from '../../../src/lib/school-branding';
 import { EmptyState, ErrorState, LoadingState } from '../../../src/components/ui';
 import { STUDENT } from '../../../src/theme/student';

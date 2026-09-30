@@ -634,7 +634,7 @@ export function compareAnswers(question: any, userAnswer: unknown, correctAnswer
     const correct = Array.isArray(correctAnswer) ? correctAnswer : [correctAnswer];
     const user = Array.isArray(userAnswer) ? userAnswer : [userAnswer];
     const norm = (arr: unknown[]) =>
-      arr.map((a) => getOptionText(a, question?.subject).toLowerCase().trim()).sort().join('|');
+      arr.map((a) => getOptionText(a, question?.subject).toLowerCase().trim()).sort((a, b) => a.localeCompare(b)).join('|');
     return norm(correct as unknown[]) === norm(user as unknown[]);
   }
   const correct = Array.isArray(correctAnswer) ? getOptionText(correctAnswer[0], question?.subject) : getOptionText(correctAnswer, question?.subject);
@@ -917,11 +917,11 @@ export function buildPerformanceInsights(
 
   const subjects = Object.entries(result.subjectWiseScore || {});
   if (subjects.length > 0) {
-    const best = subjects.reduce((a, b) => {
+    const best = subjects.slice(1).reduce((a, b) => {
       const pa = a[1].total > 0 ? a[1].correct / a[1].total : 0;
       const pb = b[1].total > 0 ? b[1].correct / b[1].total : 0;
       return pb > pa ? b : a;
-    });
+    }, subjects[0]);
     const bestPct = best[1].total > 0 ? (best[1].correct / best[1].total) * 100 : 0;
     if (bestPct >= 50) {
       const name = best[0].charAt(0).toUpperCase() + best[0].slice(1);

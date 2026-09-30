@@ -121,11 +121,8 @@ export function useDashboardShellBack({
     const onBack = () => {
       if (menuOpenRef.current) {
         closeMenuRef.current?.();
-        return true;
-      }
-      if (!isHomeRef.current) {
+      } else if (!isHomeRef.current) {
         goHomeRef.current();
-        return true;
       }
       return true;
     };

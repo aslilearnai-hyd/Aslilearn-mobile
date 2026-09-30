@@ -2,15 +2,7 @@ import { storageGetItem } from '../../../../src/lib/safe-storage';
 import React, { memo, useEffect, useState } from 'react';
 import { View, Text, StyleSheet, Image, ActivityIndicator, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
-import { API_BASE_URL } from '../../../../src/lib/api-config';
-
-function timetableImageSrc(imageUrl?: string | null): string {
-  const raw = String(imageUrl || '').trim();
-  if (!raw) return '';
-  if (raw.startsWith('http://') || raw.startsWith('https://')) return raw;
-  if (raw.startsWith('/')) return `${API_BASE_URL}${raw}`;
-  return `${API_BASE_URL}/${raw}`;
-}
+import { timetableImageSrc } from '../../../../src/lib/timetable-image-src';
 import { GlassPanel } from '../../../../src/components/ui';
 import { STUDENT, STUDENT_RADIUS } from '../../../../src/theme/student';
 

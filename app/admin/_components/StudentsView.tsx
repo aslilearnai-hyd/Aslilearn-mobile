@@ -288,7 +288,7 @@ export default function StudentsView() {
             .filter((s) => getClassSectionMeta(s).classKey === classKey)
             .map((s) => getClassSectionMeta(s).sectionKey)
         )
-      ).sort();
+      ).sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
       acc[classKey] = sections;
       return acc;
     }, {});
@@ -838,7 +838,7 @@ export default function StudentsView() {
                   {!isClassCollapsed && (
                     <View style={styles.accordionBody}>
                       {Object.keys(classSectionGroups[classKey])
-                        .sort()
+                        .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }))
                         .map((sectionKey) => {
                           const sectionScopeKey = `${classKey}::${sectionKey}`;
                           const isSectionCollapsed = collapsedSections[sectionScopeKey] ?? true;
@@ -883,7 +883,7 @@ export default function StudentsView() {
     return (
       <View style={styles.accordionList}>
         {Object.keys(sectionClassGroups)
-          .sort()
+          .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }))
           .map((sectionKey) => {
             const isSectionCollapsed = collapsedSections[sectionKey] ?? true;
             const sectionCount = Object.values(sectionClassGroups[sectionKey]).flat().length;

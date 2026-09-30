@@ -151,7 +151,7 @@ export default function StudentRankingView() {
                 </View>
               </View>
             </View>
-            {ranking.completedAt && (
+            {Boolean(ranking.completedAt) && (
               <View style={styles.rankingFooter}>
                 <Ionicons name="calendar" size={14} color="#6b7280" />
                 <Text style={styles.rankingFooterText}>

@@ -18,6 +18,45 @@ function isSensitiveKey(key: string): boolean {
   return SENSITIVE_KEYS.has(key);
 }
 
+async function removeSecureItemSilently(key: string): Promise<void> {
+  try {
+    await SecureStore.deleteItemAsync(key);
+  } catch {
+    /* ignore unavailable secure storage during cleanup */
+  }
+}
+
+async function removeAsyncItemSilently(key: string): Promise<void> {
+  try {
+    await AsyncStorage.removeItem(key);
+  } catch {
+    /* ignore unavailable fallback storage during cleanup */
+  }
+}
+
+async function setAsyncItemSilently(key: string, value: string): Promise<void> {
+  try {
+    await AsyncStorage.setItem(key, value);
+  } catch {
+    /* never crash the app on a non-sensitive storage write */
+  }
+}
+
+async function trySetSecureItem(
+  key: string,
+  value: string,
+  sensitive: boolean,
+): Promise<boolean> {
+  try {
+    await SecureStore.setItemAsync(key, value);
+    if (sensitive) await removeAsyncItemSilently(key);
+    return true;
+  } catch {
+    if (sensitive) throw new Error('Secure credential storage is unavailable.');
+    return false;
+  }
+}
+
 export async function storageGetItem(key: string): Promise<string | null> {
   if (!useAsyncOnly()) {
     try {
@@ -44,49 +83,28 @@ export async function storageGetItem(key: string): Promise<string | null> {
 }
 
 export async function storageSetItem(key: string, value: string): Promise<void> {
+  const sensitive = isSensitiveKey(key);
   const tooLarge = value.length >= SECURE_STORE_MAX_BYTES;
-  if (isSensitiveKey(key) && tooLarge) {
+  if (sensitive && tooLarge) {
     throw new Error('Authentication credential is too large for secure storage.');
   }
-  if (!useAsyncOnly() && !tooLarge) {
-    try {
-      await SecureStore.setItemAsync(key, value);
-      if (isSensitiveKey(key)) {
-        try {
-          await AsyncStorage.removeItem(key);
-        } catch {
-          /* drop any leftover plaintext copy */
-        }
-      }
-      return;
-    } catch {
-      if (isSensitiveKey(key)) throw new Error('Secure credential storage is unavailable.');
-    }
-  } else if (!useAsyncOnly() && tooLarge) {
-    try {
-      await SecureStore.deleteItemAsync(key);
-    } catch {
-      /* ignore */
-    }
+
+  if (useAsyncOnly()) {
+    await setAsyncItemSilently(key, value);
+    return;
   }
-  try {
-    await AsyncStorage.setItem(key, value);
-  } catch {
-    /* never crash the app on storage write */
+
+  if (tooLarge) {
+    await removeSecureItemSilently(key);
+    await setAsyncItemSilently(key, value);
+    return;
   }
+
+  if (await trySetSecureItem(key, value, sensitive)) return;
+  await setAsyncItemSilently(key, value);
 }
 
 export async function storageDeleteItem(key: string): Promise<void> {
-  if (!useAsyncOnly()) {
-    try {
-      await SecureStore.deleteItemAsync(key);
-    } catch {
-      /* ignore */
-    }
-  }
-  try {
-    await AsyncStorage.removeItem(key);
-  } catch {
-    /* ignore */
-  }
+  if (!useAsyncOnly()) await removeSecureItemSilently(key);
+  await removeAsyncItemSilently(key);
 }

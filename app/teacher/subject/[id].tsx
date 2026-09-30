@@ -151,7 +151,7 @@ export default function TeacherSubjectContentScreen() {
       const track = getLibraryContentProductCategory(c);
       if (track) set.add(track);
     });
-    return Array.from(set).sort();
+    return Array.from(set).sort((a, b) => String(a).localeCompare(String(b), undefined, { numeric: true }));
   }, [contents]);
 
   const classFiltered = useMemo(() => {
@@ -176,7 +176,7 @@ export default function TeacherSubjectContentScreen() {
   );
 
   const uniqueTypes = useMemo(
-    () => Array.from(new Set(classFiltered.map((c) => c.type))).sort(),
+    () => Array.from(new Set(classFiltered.map((c) => c.type))).sort((a, b) => a.localeCompare(b)),
     [classFiltered]
   );
 

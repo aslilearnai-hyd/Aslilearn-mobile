@@ -214,7 +214,7 @@ function buildLocalExamResult(
         const correctArr = Array.isArray(correct) ? correct : [correct];
         const userArr = Array.isArray(userAnswer) ? userAnswer : [userAnswer];
         const norm = (arr: unknown[]) =>
-          arr.map((a) => String(a).toLowerCase().trim()).sort().join('|');
+          arr.map((a) => String(a).toLowerCase().trim()).sort((a, b) => a.localeCompare(b)).join('|');
         isCorrect = norm(correctArr) === norm(userArr);
       } else {
         isCorrect =

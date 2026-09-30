@@ -100,7 +100,7 @@ export default function ContentManagementView() {
   };
 
   const getUniqueClassNumbers = () => {
-    return Array.from(new Set(contents.map(c => c.classNumber).filter(Boolean))).sort();
+    return Array.from(new Set(contents.map(c => c.classNumber).filter(Boolean))).sort((a, b) => String(a).localeCompare(String(b), undefined, { numeric: true }));
   };
 
   const getUniqueContentTypes = () => {

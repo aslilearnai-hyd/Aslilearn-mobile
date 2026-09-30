@@ -14,6 +14,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { API_BASE_URL } from '../../src/lib/api-config';
+import { timetableImageSrc } from '../../src/lib/timetable-image-src';
 import { useBackNavigation } from '../../src/hooks/useBackNavigation';
 import { EmptyState, ErrorState, GlassPanel, LoadingState } from '../../src/components/ui';
 import StudentScreenHeader from '../../src/components/student/StudentScreenHeader';
@@ -24,14 +25,6 @@ type PhotoPayload = {
   label?: string;
   imageUrl?: string;
 };
-
-function timetableImageSrc(imageUrl?: string | null): string {
-  const raw = String(imageUrl || '').trim();
-  if (!raw) return '';
-  if (raw.startsWith('http://') || raw.startsWith('https://')) return raw;
-  if (raw.startsWith('/')) return `${API_BASE_URL}${raw}`;
-  return `${API_BASE_URL}/${raw}`;
-}
 
 export default function StudentTimetable() {
   const blocked = useSchoolOnlyGuard();
