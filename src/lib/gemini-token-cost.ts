@@ -2,6 +2,8 @@ export const GEMINI_25_FLASH_INPUT_USD_PER_M = 0.3;
 export const GEMINI_25_FLASH_OUTPUT_USD_PER_M = 2.5;
 export const GEMINI_25_FLASH_LITE_INPUT_USD_PER_M = 0.1;
 export const GEMINI_25_FLASH_LITE_OUTPUT_USD_PER_M = 0.4;
+export const GEMINI_31_FLASH_LITE_INPUT_USD_PER_M = 0.25;
+export const GEMINI_31_FLASH_LITE_OUTPUT_USD_PER_M = 1.5;
 export const DEFAULT_USD_TO_INR = 95.11;
 
 export type TokenTotals = {
@@ -42,20 +44,29 @@ export type TokenUsageSnapshot = {
 
 export function resolveGeminiPricing(modelName = "") {
   const model = String(modelName || "").toLowerCase();
-  if (model.includes("flash-lite") || model.includes("flash_lite")) {
+  if (model.includes("2.5") && (model.includes("flash-lite") || model.includes("flash_lite"))) {
     return {
-      model: "gemini-2.5-flash-lite",
+      model: "gemini-2.5-flash-lite (legacy)",
       inputUsdPerM: GEMINI_25_FLASH_LITE_INPUT_USD_PER_M,
       outputUsdPerM: GEMINI_25_FLASH_LITE_OUTPUT_USD_PER_M,
       pricingNote:
-        "Estimated from Gemini 2.5 Flash-Lite list pricing (input $0.10/M, output $0.40/M).",
+        "Legacy Gemini 2.5 Flash-Lite list pricing (input $0.10/M, output $0.40/M).",
+    };
+  }
+  if (model.includes("flash-lite") || model.includes("flash_lite")) {
+    return {
+      model: "gemini-3.1-flash-lite",
+      inputUsdPerM: GEMINI_31_FLASH_LITE_INPUT_USD_PER_M,
+      outputUsdPerM: GEMINI_31_FLASH_LITE_OUTPUT_USD_PER_M,
+      pricingNote:
+        "Estimated from Gemini 3.1 Flash-Lite list pricing (input $0.25/M, output $1.50/M).",
     };
   }
   return {
-    model: "gemini-2.5-flash",
-    inputUsdPerM: GEMINI_25_FLASH_INPUT_USD_PER_M,
-    outputUsdPerM: GEMINI_25_FLASH_OUTPUT_USD_PER_M,
-    pricingNote: "Estimated from Gemini 2.5 Flash list pricing (input $0.30/M, output $2.50/M).",
+    model: "gemini-3.1-flash-lite",
+    inputUsdPerM: GEMINI_31_FLASH_LITE_INPUT_USD_PER_M,
+    outputUsdPerM: GEMINI_31_FLASH_LITE_OUTPUT_USD_PER_M,
+    pricingNote: "Estimated from Gemini 3.1 Flash-Lite list pricing (input $0.25/M, output $1.50/M).",
   };
 }
 
@@ -149,7 +160,7 @@ export function perRecordShareFromCost(
 
 export function computeGeminiFlashCost(
   totals: Partial<TokenTotals>,
-  modelName = "gemini-2.5-flash-lite",
+  modelName = "gemini-3.1-flash-lite",
   exchangeRateInr = DEFAULT_USD_TO_INR,
 ): GeminiCostEstimate {
   const promptTokens = Math.max(0, Number(totals.promptTokens || 0));
@@ -219,7 +230,7 @@ export function computeGeminiCostFromTokenUsage(
 
   return computeGeminiFlashCost(
     tokenUsage?.totals || {},
-    "gemini-2.5-flash-lite",
+    "gemini-3.1-flash-lite",
     exchangeRateInr,
   );
 }

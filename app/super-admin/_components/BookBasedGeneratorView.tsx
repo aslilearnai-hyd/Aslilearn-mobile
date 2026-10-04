@@ -73,6 +73,7 @@ export default function BookBasedGeneratorView({ onOpenBookKnowledge }: Props) {
     tokenUsage: TokenTotals;
     cost: GeminiCostEstimate;
     perRecordCost: { usd: number; inr: number };
+    trackingMissing: boolean;
   } | null>(null);
 
   const { classOptions, subjects, topics, subtopics, loadingClasses, loadingSubjects, loadingTopics, loadingSubtopics } =
@@ -208,6 +209,7 @@ export default function BookBasedGeneratorView({ onOpenBookKnowledge }: Props) {
           ? result.cost
           : computeGeminiCostFromTokenUsage({ totals: tokenUsage, calls: tokenCalls }, exchangeRateInr);
       const savedCount = Number(result.savedCount) || 0;
+      const trackingMissing = savedCount > 0 && tokenUsage.callCount === 0;
       const perRecord = perRecordShareFromCost(cost, savedCount || 1);
       setLastSummary({
         successCount: savedCount,
@@ -216,10 +218,13 @@ export default function BookBasedGeneratorView({ onOpenBookKnowledge }: Props) {
         tokenUsage,
         cost,
         perRecordCost: perRecord,
+        trackingMissing,
       });
       Alert.alert(
         savedCount > 0 ? 'Batch Saved' : 'Batch Failed',
-        `${savedCount}/${result.batchSize || generationRecordCount} saved · ${formatTokenCount(tokenUsage.totalTokens)} tokens · ${formatCostInr(cost.inr)}`,
+        trackingMissing
+          ? `${savedCount}/${result.batchSize || generationRecordCount} saved · token/cost tracking unavailable (₹0 is not the real cost)`
+          : `${savedCount}/${result.batchSize || generationRecordCount} saved · ${formatTokenCount(tokenUsage.totalTokens)} tokens · ${formatCostInr(cost.inr)}`,
       );
     } catch (err: any) {
       if (err?.locked) setGenerationLocked(true);
@@ -437,9 +442,10 @@ export default function BookBasedGeneratorView({ onOpenBookKnowledge }: Props) {
           <Text style={styles.summaryTitle}>
             Last Batch: {lastSummary.successCount}/{lastSummary.batchSize} Saved
           </Text>
-          <Text style={styles.summaryLine}>
-            {formatTokenCount(lastSummary.tokenUsage.totalTokens)} Tokens · Batch {formatCostInr(lastSummary.cost.inr)}
-            {lastSummary.successCount > 0 ? ` · ~${formatCostInr(lastSummary.perRecordCost.inr)}/Record` : ''}
+          <Text style={[styles.summaryLine, lastSummary.trackingMissing && styles.summaryWarning]}>
+            {lastSummary.trackingMissing
+              ? 'Token/cost tracking unavailable. ₹0 is not the real cost; deploy the latest backend and retry a small batch.'
+              : `${formatTokenCount(lastSummary.tokenUsage.totalTokens)} Tokens · Batch ${formatCostInr(lastSummary.cost.inr)}${lastSummary.successCount > 0 ? ` · ~${formatCostInr(lastSummary.perRecordCost.inr)}/Record` : ''}`}
           </Text>
         </View>
       ) : null}
@@ -483,4 +489,5 @@ const styles = StyleSheet.create({
   summary: { backgroundColor: '#ecfdf5', borderRadius: 12, padding: 12, borderWidth: 1, borderColor: '#a7f3d0', gap: 4 },
   summaryTitle: { fontWeight: '800', color: '#065f46', fontSize: 13 },
   summaryLine: { color: '#047857', fontSize: 12 },
+  summaryWarning: { color: '#92400e', fontWeight: '700' },
 });
