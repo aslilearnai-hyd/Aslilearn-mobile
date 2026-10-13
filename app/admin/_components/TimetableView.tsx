@@ -82,9 +82,13 @@ export default function TimetableView() {
       const photoJson = await photoRes.json();
       const classRows: ClassOption[] = Array.isArray(classJson?.data) ? classJson.data : [];
       const photoRows: Photo[] = Array.isArray(photoJson?.data) ? photoJson.data : [];
+      const liveClassIds = new Set(classRows.map((row) => String(row._id)));
+      const visiblePhotos = photoRows.filter((row) => liveClassIds.has(String(row.classId)));
       setClasses(classRows);
-      setPhotos(photoRows);
-      if (!selectedClassId && classRows[0]?._id) setSelectedClassId(String(classRows[0]._id));
+      setPhotos(visiblePhotos);
+      if (!liveClassIds.has(String(selectedClassId))) {
+        setSelectedClassId(classRows[0]?._id ? String(classRows[0]._id) : '');
+      }
     } catch {
       setClasses([]);
       setPhotos([]);
