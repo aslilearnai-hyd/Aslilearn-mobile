@@ -98,8 +98,12 @@ function AuthGate() {
 
   useEffect(() => {
     if (isLoading) return;
-    // Wait for /me so paymentRequired is known before opening the dashboard.
-    if (isAuthenticated && !sessionResolved) return;
+    // A login updates several pieces of auth state asynchronously. The login
+    // screen may navigate as soon as signIn() resolves, before React has
+    // committed the new token. Never evaluate redirects during that transition
+    // or a valid login can briefly open the dashboard and then bounce back here.
+    // This also keeps paymentRequired routing behind the completed /me lookup.
+    if (!sessionResolved) return;
 
     const publicPath = isPublicPath(pathname);
     const subscribePath = isSubscribePath(pathname);
