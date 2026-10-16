@@ -24,6 +24,43 @@ export const setInMemoryAuthToken = (token) => {
   inMemoryAuthToken = token || null;
 };
 
+// AuthContext subscribes so a server-side session loss (expired token,
+// deactivated account) also clears React auth state and AuthGate can route
+// to login. Clearing storage alone left the app "logged in" on failing screens.
+const sessionExpiredListeners = new Set();
+export const onSessionExpired = (listener) => {
+  sessionExpiredListeners.add(listener);
+  return () => {
+    sessionExpiredListeners.delete(listener);
+  };
+};
+
+export const notifySessionCleared = (reason = '') => {
+  sessionExpiredListeners.forEach((listener) => {
+    try {
+      listener(reason);
+    } catch {
+      /* a listener must not break the caller */
+    }
+  });
+};
+
+/** Messages our backend returns when the session itself is no longer valid. */
+export const isSessionInvalidMessage = (message) => {
+  const text = String(message || '').toLowerCase();
+  return (
+    text.includes('token expired') ||
+    text.includes('invalid token') ||
+    text.includes('jwt') ||
+    text.includes('unauthorized') ||
+    text.includes('no token provided') ||
+    text.includes('log in again') ||
+    text.includes('login again') ||
+    text.includes('account is inactive') ||
+    text.includes('session expired')
+  );
+};
+
 const readTokenFromStorage = async () => {
   for (const key of TOKEN_KEYS) {
     const value = await storageGetItem(key);
@@ -69,24 +106,20 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
-    if (error?.response?.status === 401) {
-      const serverMessage = String(
-        error?.response?.data?.message || error?.response?.data?.error || ''
-      ).toLowerCase();
-      const shouldClearAuth =
-        serverMessage.includes('token expired') ||
-        serverMessage.includes('invalid token') ||
-        serverMessage.includes('jwt') ||
-        serverMessage.includes('unauthorized');
+    const isLoginRequest = String(error?.config?.url || '').includes('/api/auth/login');
+    if (error?.response?.status === 401 && !isLoginRequest) {
+      const serverMessage = error?.response?.data?.message || error?.response?.data?.error || '';
 
       // Do not clear token for every 401, because permission/route issues can also return 401.
-      if (shouldClearAuth) {
+      if (isSessionInvalidMessage(serverMessage)) {
+        const hadSession = Boolean(inMemoryAuthToken);
         inMemoryAuthToken = null;
         for (const key of TOKEN_KEYS) {
           await storageDeleteItem(key);
         }
         await storageDeleteItem('userRole');
         await storageDeleteItem('userEmail');
+        if (hadSession) notifySessionCleared(serverMessage);
       }
     }
 

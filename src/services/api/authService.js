@@ -1,4 +1,4 @@
-import api, { AUTH_TOKEN_KEY, setInMemoryAuthToken } from './api';
+import api, { AUTH_TOKEN_KEY, notifySessionCleared, setInMemoryAuthToken } from './api';
 import { storageDeleteItem, storageGetItem, storageSetItem } from '../../lib/safe-storage';
 
 const USER_ROLE_KEY = 'userRole';
@@ -19,6 +19,8 @@ const clearAuth = async () => {
   await storageDeleteItem(AUTH_TOKEN_KEY);
   await storageDeleteItem(USER_ROLE_KEY);
   await storageDeleteItem(USER_EMAIL_KEY);
+  // Keep AuthContext in sync so AuthGate does not bounce /auth/login back to a dashboard.
+  notifySessionCleared('cleared');
 };
 
 /** Normalize API role variants: super_admin → super-admin */

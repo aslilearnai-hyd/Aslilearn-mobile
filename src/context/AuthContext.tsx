@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import authService from '../services/api/authService';
+import { onSessionExpired } from '../services/api/api';
 import { resetSessionBaseline } from '../lib/session-time-sync';
 
 type LoginPayload = {
@@ -87,6 +88,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     refreshAuth();
   }, []);
+
+  // The API client clears storage when the server rejects the session; mirror
+  // that here so isAuthenticated flips and AuthGate redirects to login.
+  useEffect(
+    () =>
+      onSessionExpired(() => {
+        setToken(null);
+        setRole(null);
+        setUser(null);
+        setIsLoading(false);
+        setSessionResolved(true);
+      }),
+    []
+  );
 
   const signIn = async (payload: LoginPayload) => {
     resetSessionBaseline();
